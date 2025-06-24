@@ -19,8 +19,6 @@ public class NinePatchTestApplication  extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         var controller = new NinePatchTestController();
-        FXMLHelper.loadFXML("/ninePatchTest.fxml", controller);
-        controller.init();
         this.primaryStage = primaryStage;
         this.primaryStage.setScene(new Scene(controller));
         primaryStage.show();

@@ -5,11 +5,10 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
-import javafx.css.*;
 import javafx.css.converter.InsetsConverter;
+import javafx.css.converter.SizeConverter;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -18,36 +17,62 @@ import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yetyman.controls.CssHelper;
-import org.yetyman.controls.PseudoClassHelper;
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
 
 public class NinePatchPane extends GridPane {
+    private static Logger log = LoggerFactory.getLogger(NinePatchPane.class);
 
     /**
      * Insets describing the number of pixels of patch border on any side.
      * This in conjunction with patchScale determines the number of pixels of an image which are sampled for the border
      */
-    public final ObjectProperty<Insets> patchSizesProperty
+    public final ObjectProperty<Insets> controlPatchSizesProperty
             = CssHelper.createCssProperty(this, "-fx-patch-size", InsetsConverter.getInstance(), Insets.EMPTY);
 
     /**
      * Insets describing the number of pixels of imgBorder border on any side.
      * This in conjunction with imgBorderScale determines the number of pixels of an image which are sampled for the border
      */
-    public final ObjectProperty<Insets> imgBorderSizesProperty
-            = CssHelper.createCssProperty(this, "-fx-img-border-size", InsetsConverter.getInstance(), Insets.EMPTY);
+    public final ObjectProperty<Insets> imgPatchSizesProperty
+            = CssHelper.createCssProperty(this, "-fx-img-patch", InsetsConverter.getInstance(), Insets.EMPTY);
+
+    /**
+     * Insets describing the number of pixels to inset from the borders of the src image on any side.
+     */
+    public final ObjectProperty<Insets> imgPatchInsetsProperty
+            = CssHelper.createCssProperty(this, "-fx-img-patch-insets", InsetsConverter.getInstance(), Insets.EMPTY);
+
+    /**
+     * Insets describing the number of pixels of patch border on any side.
+     * This in conjunction with patchScale determines the number of pixels of an image which are sampled for the border
+     */
+    public final ObjectProperty<Number> imageScaleProperty = CssHelper.createCssProperty(this, "-fx-image-scale", SizeConverter.getInstance(), 2);
 
     private final Label debugLabel;
 
-    public final Insets getPatchSizes(){
-      return patchSizesProperty.get();
+    public final Insets getContentPatchSizes(){
+      return controlPatchSizesProperty.get();
+    }
+    public final void setContentPatchSizes(Insets val){
+      controlPatchSizesProperty.set(val);
     }
 
-    public final void setPatchSizes(Insets val){
-      patchSizesProperty.set(val);
+    public final Insets getImgPatchSizes(){
+      return imgPatchSizesProperty.get();
     }
+    public final void setImgPatchSizes(Insets val){
+        imgPatchSizesProperty.set(val);
+    }
+
+    public final Insets getImgPatchInsets(){
+      return imgPatchInsetsProperty.get();
+    }
+    public final void setImgPatchInsets(Insets val){
+        imgPatchInsetsProperty.set(val);
+    }
+
     public SimpleObjectProperty<Insets> contentPaddingProperty = new SimpleObjectProperty<>(new Insets(5));
     public Insets getContentPadding(){
       return contentPaddingProperty.get();
@@ -56,14 +81,7 @@ public class NinePatchPane extends GridPane {
     public void setContentPadding(Insets val){
       contentPaddingProperty.set(val);
     }
-    public SimpleObjectProperty<Insets> titlePatchSizesProperty = new SimpleObjectProperty<>(new Insets(5));
-    public Insets getTitlePatchSizes(){
-        return titlePatchSizesProperty.get();
-    }
 
-    public void setTitlePatchSizes(Insets val){
-        titlePatchSizesProperty.set(val);
-    }
     public SimpleObjectProperty<Insets> titleMarginsProperty = new SimpleObjectProperty<>(new Insets(0));
     public Insets getTitleMargins(){
         return titleMarginsProperty.get();
@@ -72,16 +90,8 @@ public class NinePatchPane extends GridPane {
     public void setTitleMargins(Insets val){
         titleMarginsProperty.set(val);
     }
-    public SimpleObjectProperty<Insets> titlePaddingProperty = new SimpleObjectProperty<>(new Insets(5));
-    public Insets getTitlePadding(){
-      return titlePaddingProperty.get();
-    }
 
-    public void setTitlePadding(Insets val){
-      titlePaddingProperty.set(val);
-    }
-
-    public SimpleObjectProperty<String> titleProperty = new SimpleObjectProperty<>("Hi I'm Jody!");
+    public SimpleObjectProperty<String> titleProperty = new SimpleObjectProperty<>("Hi I'm Yety!");
     public String getTitle(){
       return titleProperty.get();
     }
@@ -139,14 +149,9 @@ public class NinePatchPane extends GridPane {
       backgroundVRepeatProperty.set(val);
     }
 
-    public SimpleObjectProperty<Boolean> titleShownProperty = new SimpleObjectProperty<>(false);
-    public Boolean getTitleShown(){
-        return titleShownProperty.get();
-    }
-
-    public void setTitleShown(Boolean val){
-        titleShownProperty.set(val);
-    }
+    public final ObjectProperty<Node> titleContent = new SimpleObjectProperty<>();
+    public void setTitleContent(Node content) { titleContent.set(content); }
+    public Node getTitleContent() { return titleContent.get(); }
 
     public SimpleObjectProperty<Border> patchDebugBorderProperty = new SimpleObjectProperty<>(null);
     public Border getPatchDebugBorder(){
@@ -179,7 +184,6 @@ public class NinePatchPane extends GridPane {
     }
 
 
-    private Label titleText;
 
     GridPane patchGrid = new GridPane();
 
@@ -194,16 +198,16 @@ public class NinePatchPane extends GridPane {
     Pane cPane = new Pane();
 
     Image tl = null;
-    Image t = null;
+    Image tSrc = null;
     Image tr = null;
-    Image r = null;
+    Image rSrc = null;
     Image br = null;
-    Image b = null;
+    Image bSrc = null;
     Image bl = null;
-    Image l = null;
-    Image c = null;
+    Image lSrc = null;
+    Image cSrc = null;
 
-     GridPane contentPane = new GridPane();
+    GridPane contentPane = new GridPane();
 
     ColumnConstraints pColumn1 = new ColumnConstraints(),
             pColumn2 = new ColumnConstraints(),
@@ -211,18 +215,10 @@ public class NinePatchPane extends GridPane {
     RowConstraints pRow1 = new RowConstraints(),
             pRow2 = new RowConstraints(),
             pRow3 = new RowConstraints();
-    private NinePatchPane titlePane = null;
-    public ObservableList<Node> titleContentChildren = null;
+
     public ObservableList<Node> contentChildren = null;
-    private boolean isTitle;
 
     public NinePatchPane(){
-        this(false);
-    }
-    private NinePatchPane(boolean isTitle){
-
-        this.isTitle = isTitle;
-
         patchGrid.getColumnConstraints().addAll(pColumn1, pColumn2, pColumn3);
         patchGrid.getRowConstraints().addAll(pRow1, pRow2, pRow3);
 
@@ -260,12 +256,12 @@ public class NinePatchPane extends GridPane {
         contentPane.minHeight(Region.USE_PREF_SIZE);
         contentPane.maxHeight(Region.USE_PREF_SIZE);
 
-        if(getColumnConstraints().size() == 0)
+        if(getColumnConstraints().isEmpty())
             getColumnConstraints().add(new ColumnConstraints(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE, Priority.ALWAYS, HPos.CENTER, true));
         else
             getColumnConstraints().set(0, new ColumnConstraints(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE, Priority.ALWAYS, HPos.CENTER, true));
 
-        if(getRowConstraints().size() == 0)
+        if(getRowConstraints().isEmpty())
             getRowConstraints().add(new RowConstraints(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE, Priority.ALWAYS, VPos.CENTER, true));
         else
             getRowConstraints().set(0, new RowConstraints(Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE, Region.USE_COMPUTED_SIZE, Priority.ALWAYS, VPos.CENTER, true));
@@ -294,128 +290,74 @@ public class NinePatchPane extends GridPane {
         GridPane.setFillHeight(contentPane, true);
         GridPane.setFillWidth(contentPane, true);
 
-        patchSizesProperty.addListener(new ChangeListener<Insets>() {
+        controlPatchSizesProperty.addListener(new ChangeListener<Insets>() {
             @Override
             public void changed(ObservableValue<? extends Insets> observable, Insets oldValue, Insets newValue) {
 
-                pRow1.setMinHeight(patchSizesProperty.get().getTop());
-                pRow1.setPrefHeight(patchSizesProperty.get().getTop());
-                pRow1.setMaxHeight(patchSizesProperty.get().getTop());
+                pRow1.setMinHeight(controlPatchSizesProperty.get().getTop());
+                pRow1.setPrefHeight(controlPatchSizesProperty.get().getTop());
+                pRow1.setMaxHeight(controlPatchSizesProperty.get().getTop());
 
-                pRow3.setMinHeight(patchSizesProperty.get().getBottom());
-                pRow3.setPrefHeight(patchSizesProperty.get().getBottom());
-                pRow3.setMaxHeight(patchSizesProperty.get().getBottom());
+                pRow3.setMinHeight(controlPatchSizesProperty.get().getBottom());
+                pRow3.setPrefHeight(controlPatchSizesProperty.get().getBottom());
+                pRow3.setMaxHeight(controlPatchSizesProperty.get().getBottom());
 
 
-                pColumn1.setMinWidth(patchSizesProperty.get().getTop());
-                pColumn1.setPrefWidth(patchSizesProperty.get().getTop());
-                pColumn1.setMaxWidth(patchSizesProperty.get().getTop());
+                pColumn1.setMinWidth(controlPatchSizesProperty.get().getTop());
+                pColumn1.setPrefWidth(controlPatchSizesProperty.get().getTop());
+                pColumn1.setMaxWidth(controlPatchSizesProperty.get().getTop());
 
-                pColumn3.setMinWidth(patchSizesProperty.get().getBottom());
-                pColumn3.setPrefWidth(patchSizesProperty.get().getBottom());
-                pColumn3.setMaxWidth(patchSizesProperty.get().getBottom());
+                pColumn3.setMinWidth(controlPatchSizesProperty.get().getBottom());
+                pColumn3.setPrefWidth(controlPatchSizesProperty.get().getBottom());
+                pColumn3.setMaxWidth(controlPatchSizesProperty.get().getBottom());
 
                 cutImage();
             }
         });
 
-        imgBorderSizesProperty.addListener(new ChangeListener<Insets>(){
-            @Override
-            public void changed(ObservableValue<? extends Insets> observable, Insets oldValue, Insets newValue) {
-                imgBorderSizesProperty.get();
-                cutImage();
-            }
+        imgPatchSizesProperty.addListener((observable, oldValue, newValue) -> {
+            cutImage();
+        });
+        imgPatchInsetsProperty.addListener((observable, oldValue, newValue) -> {
+            cutImage();
+        });
+
+        imageScaleProperty.addListener((s,a,b)->{
+            cutImage();
         });
 
         contentPaddingProperty.bindBidirectional(contentPane.paddingProperty());
 
-        backgroundHRepeatProperty.addListener(new ChangeListener<BackgroundRepeat>() {
-            @Override
-            public void changed(ObservableValue<? extends BackgroundRepeat> observable, BackgroundRepeat oldValue, BackgroundRepeat newValue) {
-                cutImage();
-            }
-        });
-        backgroundVRepeatProperty.addListener(new ChangeListener<BackgroundRepeat>() {
-            @Override
-            public void changed(ObservableValue<? extends BackgroundRepeat> observable, BackgroundRepeat oldValue, BackgroundRepeat newValue) {
-                cutImage();
-            }
-        });
+        backgroundHRepeatProperty.addListener((observable, oldValue, newValue) -> cutImage());
+        backgroundVRepeatProperty.addListener((observable, oldValue, newValue) -> cutImage());
 
         srcImgProperty.addListener(observable -> setBackground(srcImgProperty.get()));
 
         contentPaddingProperty.set(new Insets(7));
-        patchSizesProperty.set(new Insets(10));
+        controlPatchSizesProperty.set(new Insets(10));
         GridPane.setMargin(patchGrid, Insets.EMPTY);
         setMinSize(30, 30);
 
-        if(!isTitle) {
-            titlePane = new NinePatchPane(true);
-            addAt(this, titlePane, 0,0);
+        titleContent.addListener((s,a,b)->{
+            if(a != null)
+                getChildren().remove(a);
+            if(b != null) {
+                Node titleNode = titleContent.get();
+                addAt(this, titleNode, 0, 0);
 
-
-            titlePane.minWidth(Region.USE_PREF_SIZE);
-            titlePane.maxWidth(Region.USE_PREF_SIZE);
-            titlePane.prefHeight(Region.USE_COMPUTED_SIZE);
-            titlePane.prefWidth(Region.USE_COMPUTED_SIZE);
-            titlePane.minHeight(Region.USE_PREF_SIZE);
-            titlePane.maxHeight(Region.USE_PREF_SIZE);
-            titlePane.patchDebugBorderProperty.bindBidirectional(patchDebugBorderProperty);
-            GridPane.setHgrow(titlePane, Priority.NEVER);
-            GridPane.setVgrow(titlePane, Priority.NEVER);
-            GridPane.setFillHeight(titlePane, false);
-            GridPane.setFillWidth(titlePane, false);
-        }
+                GridPane.setHgrow(titleNode, Priority.NEVER);
+                GridPane.setVgrow(titleNode, Priority.NEVER);
+                GridPane.setFillHeight(titleNode, false);
+                GridPane.setFillWidth(titleNode, false);
+            }
+        });
 
         debugLabel = new Label();
         getChildren().add(debugLabel);
-    }
 
-    public void init() {
-        if (!isTitle) {
-            titlePane.contentChildren.add(titleText = new Label());
-            titleText.setTextFill(Color.WHITE);
-            titleText.setStyle("-fx-font-weight: bold;");
-            titleText.setAlignment(Pos.CENTER);
-            titleText.minWidth(Region.USE_PREF_SIZE);
-            titleText.maxWidth(Region.USE_PREF_SIZE);
-            titleText.prefHeight(Region.USE_COMPUTED_SIZE);
-            titleText.prefWidth(Region.USE_COMPUTED_SIZE);
-            titleText.minHeight(Region.USE_PREF_SIZE);
-            titleText.maxHeight(Region.USE_PREF_SIZE);
-
-            titleText.textProperty().bindBidirectional(titleProperty);
-            titlePane.patchSizesProperty.bindBidirectional(titlePatchSizesProperty);
-            titlePane.contentPaddingProperty.bindBidirectional(titlePaddingProperty);
-            titlePane.visibleProperty().bindBidirectional(titleShownProperty);
-
-            titleMarginsProperty.addListener((o, a, b) -> GridPane.setMargin(titlePane, titleMarginsProperty.get()));
-            titleHPosProperty.addListener((o, a, b) -> GridPane.setHalignment(titlePane, titleHPosProperty.get()));
-            titleVPosProperty.addListener((o, a, b) -> GridPane.setValignment(titlePane, titleVPosProperty.get()));
-            titleImgProperty.addListener((o, a, b) -> setTitleBackground(titleImgProperty.get(), titlePane.patchSizesProperty.get()));
-
-            GridPane.setMargin(titlePane, titleMarginsProperty.get());
-            GridPane.setMargin(patchGrid, new Insets(5));
-
-            GridPane.setHalignment(titlePane, titleHPosProperty.get());
-            GridPane.setValignment(titlePane, titleVPosProperty.get());
-            titleMarginsProperty.set(GridPane.getMargin(titlePane));
-            titleHPosProperty.set(GridPane.getHalignment(titlePane));
-            titleVPosProperty.set(GridPane.getValignment(titlePane));
-            titleImgProperty.set(titlePane.getSrcImg());
-
-            titlePaddingProperty.set(new Insets(5));
-            titlePatchSizesProperty.set(new Insets(2));
-        }
-    }
-
-    private void hideTitle(){
-        if(titlePane==null) return;
-        titleShownProperty.set(false);
-    }
-    private void showTitle(){
-        if(titlePane==null) return;
-        titleShownProperty.set(true);
+        titleMarginsProperty.addListener((o, a, b) -> { if(titleContent.get()!=null) GridPane.setMargin(titleContent.get(), titleMarginsProperty.get()); });
+        titleHPosProperty.addListener((o, a, b) -> { if(titleContent.get()!=null) GridPane.setHalignment(titleContent.get(), titleHPosProperty.get()); });
+        titleVPosProperty.addListener((o, a, b) -> { if(titleContent.get()!=null) GridPane.setValignment(titleContent.get(), titleVPosProperty.get()); });
     }
 
     public GridPane getContentPane(){
@@ -428,83 +370,79 @@ public class NinePatchPane extends GridPane {
         try {
             PixelReader reader = srcImgProperty.get().getPixelReader();
 
-            Insets i = patchSizesProperty.get();
-            Insets srcI = imgBorderSizesProperty.get();
+            Insets i = controlPatchSizesProperty.get();
+            Insets srcI = imgPatchSizesProperty.get();
+            Insets imgInsets = imgPatchInsetsProperty.get();
+
+            double scale = imageScaleProperty.get().doubleValue();
+
             int lWidth = (int) Math.ceil(i.getLeft());
             int rWidth = (int) Math.ceil(i.getRight());
             int tHeight = (int) Math.ceil(i.getTop());
             int bHeight = (int) Math.ceil(i.getBottom());
+
+            int lSrcInset = (int) Math.ceil(imgInsets.getLeft());
+            int rSrcInset = (int) Math.ceil(imgInsets.getRight());
+            int tSrcInset = (int) Math.ceil(imgInsets.getTop());
+            int bSrcInset = (int) Math.ceil(imgInsets.getBottom());
+
             int lSrcWidth = (int) Math.ceil(srcI.getLeft());
             int rSrcWidth = (int) Math.ceil(srcI.getRight());
             int tSrcHeight = (int) Math.ceil(srcI.getTop());
             int bSrcHeight = (int) Math.ceil(srcI.getBottom());
 
-            int srcInnerH = (int) srcImgProperty.get().getHeight() - (int) Math.floor(srcI.getTop()) - (int) Math.floor(srcI.getBottom());
-            int srcInnerW = (int) srcImgProperty.get().getWidth() -  (int) Math.floor(srcI.getLeft()) - (int) Math.floor(srcI.getRight());
+            int srcInnerH = (int) (srcImgProperty.get().getHeight() - tSrcHeight - bSrcHeight - tSrcInset - bSrcInset);
+            int srcInnerW = (int) (srcImgProperty.get().getWidth() -  lSrcWidth - rSrcWidth - lSrcInset - rSrcInset);
 
-            pColumn1.setMinWidth(lWidth);
-            pColumn1.setMaxWidth(lWidth);
-            pColumn1.setPrefWidth(lWidth);
+            pColumn1.setMinWidth( lWidth*scale);
+            pColumn1.setMaxWidth( lWidth*scale);
+            pColumn1.setPrefWidth(lWidth*scale);
+            pColumn3.setMinWidth( rWidth*scale);
+            pColumn3.setMaxWidth( rWidth*scale);
+            pColumn3.setPrefWidth(rWidth*scale);
+            pRow1.setMinHeight(  tHeight*scale);
+            pRow1.setMaxHeight(  tHeight*scale);
+            pRow1.setPrefHeight( tHeight*scale);
+            pRow3.setMinHeight(  bHeight*scale);
+            pRow3.setMaxHeight(  bHeight*scale);
+            pRow3.setPrefHeight( bHeight*scale);
 
-            pColumn3.setMinWidth(rWidth);
-            pColumn3.setMaxWidth(rWidth);
-            pColumn3.setPrefWidth(rWidth);
+            boolean stretchH = backgroundHRepeatProperty.get() == BackgroundRepeat.NO_REPEAT;
+            boolean stretchV = backgroundVRepeatProperty.get() == BackgroundRepeat.NO_REPEAT;
 
-            pRow1.setMinHeight(tHeight);
-            pRow1.setMaxHeight(tHeight);
-            pRow1.setPrefHeight(tHeight);
+            BackgroundSize hRepeatBG = new BackgroundSize(BackgroundSize.AUTO, 1, false, true, false, false);
+            BackgroundSize vRepeatBG = new BackgroundSize(1, BackgroundSize.AUTO, true, false, false, false);
+            BackgroundSize fullBG = new BackgroundSize(1, 1, true, true, false, false);
 
-            pRow3.setMinHeight(bHeight);
-            pRow3.setMaxHeight(bHeight);
-            pRow3.setPrefHeight(bHeight);
+            tl = new WritableImage(reader, lSrcInset, tSrcInset, lSrcWidth, tSrcHeight);
+            tlPane.setBackground(new Background(new BackgroundImage(tl, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, fullBG)));
 
-            boolean repeatsW = backgroundHRepeatProperty.get() == BackgroundRepeat.NO_REPEAT;
-            boolean repeatsV = backgroundVRepeatProperty.get() == BackgroundRepeat.NO_REPEAT;
-            double bgWidth = repeatsW ? 1 : BackgroundSize.AUTO;
-            double bgHeight = repeatsV ? 1 : BackgroundSize.AUTO;
-            BackgroundSize coverBG = new BackgroundSize(bgWidth, bgHeight, repeatsW, repeatsV, false, false);
-            BackgroundSize useBG = coverBG;
+            bl = new WritableImage(reader, lSrcInset, tSrcInset + tSrcHeight + srcInnerH, lSrcWidth, bSrcHeight);
+            blPane.setBackground(new Background(new BackgroundImage(bl, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, fullBG)));
 
-            tl = new WritableImage(reader, 0, 0, lSrcWidth, tSrcHeight);
-            tlPane.setBackground(new Background(new BackgroundImage(tl, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, useBG)));
+            tr = new WritableImage(reader, lSrcInset + lSrcWidth + srcInnerW, tSrcInset, rSrcWidth, tSrcHeight);
+            trPane.setBackground(new Background(new BackgroundImage(tr, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, fullBG)));
 
-            bl = new WritableImage(reader, 0, tSrcHeight + srcInnerH-2, lSrcWidth, bSrcHeight);
-            blPane.setBackground(new Background(new BackgroundImage(bl, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, useBG)));
+            br = new WritableImage(reader, lSrcInset + lSrcWidth + srcInnerW, tSrcInset + tSrcHeight + srcInnerH, rSrcWidth, bSrcHeight);
+            brPane.setBackground(new Background(new BackgroundImage(br, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, fullBG)));
 
-            tr = new WritableImage(reader, lSrcWidth + srcInnerW-2, 0, rSrcWidth, tSrcHeight);
-            trPane.setBackground(new Background(new BackgroundImage(tr, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, useBG)));
+            lSrc = new WritableImage(reader, lSrcInset, tSrcInset + tSrcHeight, lSrcWidth, srcInnerH);
+            lPane.setBackground(new Background(new BackgroundImage(lSrc, BackgroundRepeat.NO_REPEAT, backgroundVRepeatProperty.get(), BackgroundPosition.CENTER, stretchV ? fullBG : vRepeatBG)));
 
-            br = new WritableImage(reader, lSrcWidth + srcInnerW-2, tSrcHeight + srcInnerH-2, rSrcWidth, bSrcHeight);
-            brPane.setBackground(new Background(new BackgroundImage(br, BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, useBG)));
+            rSrc = new WritableImage(reader, lSrcInset + lSrcWidth + srcInnerW, tSrcInset + tSrcHeight, rSrcWidth, srcInnerH);
+            rPane.setBackground(new Background(new BackgroundImage(rSrc, BackgroundRepeat.NO_REPEAT, backgroundVRepeatProperty.get(), BackgroundPosition.CENTER, stretchV ? fullBG : vRepeatBG)));
 
-            if(repeatsV && !repeatsW)
-                useBG = new BackgroundSize(lWidth, bgHeight, repeatsW, repeatsV, false, false);
-            l = new WritableImage(reader, 0, tSrcHeight-1, lSrcWidth, srcInnerH);
-            lPane.setBackground(new Background(new BackgroundImage(l, BackgroundRepeat.NO_REPEAT, backgroundVRepeatProperty.get(), BackgroundPosition.CENTER, useBG)));
-            useBG = coverBG;
+            tSrc = new WritableImage(reader, lSrcInset + lSrcWidth, tSrcInset, srcInnerW, tSrcHeight);
+            tPane.setBackground(new Background(new BackgroundImage(tSrc, backgroundHRepeatProperty.get(), BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, stretchH ? fullBG : hRepeatBG)));
 
-            if(repeatsW && !repeatsV)
-                useBG = new BackgroundSize(bgWidth, tHeight, repeatsW, repeatsV, false, false);
-            t = new WritableImage(reader, lSrcWidth-1, 0, srcInnerW, tSrcHeight);
-            tPane.setBackground(new Background(new BackgroundImage(t, backgroundHRepeatProperty.get(), BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, useBG)));
-            useBG = coverBG;
+            bSrc = new WritableImage(reader, lSrcInset + lSrcWidth, tSrcInset + tSrcHeight + srcInnerH, srcInnerW, bSrcHeight);
+            bPane.setBackground(new Background(new BackgroundImage(bSrc, backgroundHRepeatProperty.get(), BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, stretchH ? fullBG : hRepeatBG)));
 
-            c = new WritableImage(reader, lSrcWidth-1, tSrcHeight-1, srcInnerW, srcInnerH);
-            cPane.setBackground(new Background(new BackgroundImage(c, backgroundHRepeatProperty.get(), backgroundVRepeatProperty.get(), BackgroundPosition.CENTER, useBG)));
-
-            if(repeatsW && !repeatsV)
-                useBG = new BackgroundSize(bgWidth, bHeight, repeatsW, repeatsV, false, false);
-            b = new WritableImage(reader, lSrcWidth-1, tSrcHeight + srcInnerH-2, srcInnerW, bSrcHeight);
-            bPane.setBackground(new Background(new BackgroundImage(b, backgroundHRepeatProperty.get(), BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER, useBG)));
-            useBG = coverBG;
+            cSrc = new WritableImage(reader, lSrcInset + lSrcWidth, tSrcInset + tSrcHeight, srcInnerW, srcInnerH);
+            cPane.setBackground(new Background(new BackgroundImage(cSrc, backgroundHRepeatProperty.get(), backgroundVRepeatProperty.get(), BackgroundPosition.CENTER, fullBG)));
 
 
-            if(repeatsV && !repeatsW)
-                useBG = new BackgroundSize(rWidth, bgHeight, repeatsW, repeatsV, false, false);
-            r = new WritableImage(reader, lSrcWidth + srcInnerW-2, tSrcHeight-1, rSrcWidth, srcInnerH);
-            rPane.setBackground(new Background(new BackgroundImage(r, BackgroundRepeat.NO_REPEAT, backgroundVRepeatProperty.get(), BackgroundPosition.CENTER, useBG)));
-            useBG = coverBG;
-            //if something seems wrong here's some code to sample pixels
+//          //if something seems wrong here's some code to sample pixels
 //            IntBuffer ib = IntBuffer.allocate(20);
 //            br.getPixelReader().getPixels(0, 0, 1, 1, WritablePixelFormat.getIntArgbInstance(), ib, 1);
 //            int alpha = ((ib.get() >> 24) & 0xff);
@@ -523,26 +461,11 @@ public class NinePatchPane extends GridPane {
     }
 
     public void setBackground(Image img, Insets patchMargins){
-        this.patchSizesProperty.set(patchMargins);
+        this.controlPatchSizesProperty.set(patchMargins);
         setBackground(img);
     }
     public void setBackground(Image img){
         srcImgProperty.set(img);
         cutImage();
     }
-
-    public void setTitleBackground(Image img, Insets titlePatchMargins){
-        if(titlePane==null) return;
-        titlePane.setBackground(img, titlePatchMargins);
-    }
-
-//    public ObservableList<Node> getChildrenUnmodifiable() {
-//        //if(contentPane==null) return super.getChildrenUnmodifiable();
-//        return contentPane.getChildrenUnmodifiable();
-//    }
-//    public ObservableList<Node> getChildren() {
-//        //if(contentPane==null) return super.getChildren();
-//        return contentPane.getChildren();
-//    }
-
 }

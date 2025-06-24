@@ -1,284 +1,211 @@
 package org.yetyman.controls.ninepatch;
 
 import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
+import javafx.event.EventHandler;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
-import javafx.scene.control.CheckBox;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
+import org.yetyman.controls.GridHelper;
+import org.yetyman.controls.selection.CycleButton;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class NinePatchTestController extends GridPane {
-    @FXML // fx:id="horizontalPaddingSlider1"
-    private Slider horizontalPaddingSlider1; // Value injected by FXMLLoader
+    private final Slider ninePatchPatchSizesH = new Slider(0,100, 5);
+    private final Slider ninePatchPatchSizesV = new Slider(0,100, 5);
+    private final Slider ninePatchContentSizesH = new Slider(0,100, 5);
+    private final Slider ninePatchContentSizesV = new Slider(0,100, 5);
+    private final Slider ninePatchTitleMarginH = new Slider(0,100, 10);
+    private final Slider ninePatchTitleMarginV = new Slider(0,100, 10);
+    private final Slider ninePatchPatchInsetsH = new Slider(0,100, 0);
+    private final Slider ninePatchPatchInsetsV = new Slider(0,100, 0);
+    private final Slider gridMarginSliderH = new Slider(0,100, 10);
+    private final Slider gridMarginSliderV = new Slider(0,100, 0);
+    private final Slider ninePatchContentPaddingH = new Slider(0,100, 0);
+    private final Slider ninePatchContentPaddingV = new Slider(0,100, 0);
+    private final NinePatchPane ninePatch = new NinePatchPane();
 
-    @FXML // fx:id="horizontalPaddingSlider2"
-    private Slider horizontalPaddingSlider2; // Value injected by FXMLLoader
+    private final Slider imgScaleSlider = new Slider(.01,10, .25);
+    private final CycleButton<BackgroundRepeat> imageRepeatHCB = new CycleButton<>();
+    private final CycleButton<BackgroundRepeat> imageRepeatVCB = new CycleButton<>();
+    private final TextField titleText = new TextField();
 
-    @FXML // fx:id="horizontalPaddingSlider3"
-    private Slider horizontalPaddingSlider3; // Value injected by FXMLLoader
-
-    @FXML // fx:id="horizontalPaddingSlider4"
-    private Slider horizontalPaddingSlider4; // Value injected by FXMLLoader
-
-    @FXML // fx:id="horizontalPaddingSlider5"
-    private Slider horizontalPaddingSlider5; // Value injected by FXMLLoader
-
-    @FXML // fx:id="horizontalPaddingSlider6"
-    private Slider horizontalPaddingSlider6; // Value injected by FXMLLoader
-
-    @FXML // fx:id="ninePatch1"
-    private NinePatchPane ninePatch1; // Value injected by FXMLLoader
-
-    @FXML // fx:id="ninePatch2"
-    private NinePatchPane ninePatch2; // Value injected by FXMLLoader
-
-    @FXML // fx:id="verticalPaddingSlider1"
-    private Slider verticalPaddingSlider1; // Value injected by FXMLLoader
-
-    @FXML // fx:id="verticalPaddingSlider2"
-    private Slider verticalPaddingSlider2; // Value injected by FXMLLoader
-
-    @FXML // fx:id="verticalPaddingSlider3"
-    private Slider verticalPaddingSlider3; // Value injected by FXMLLoader
-
-    @FXML // fx:id="verticalPaddingSlider4"
-    private Slider verticalPaddingSlider4; // Value injected by FXMLLoader
-
-    @FXML // fx:id="verticalPaddingSlider5"
-    private Slider verticalPaddingSlider5; // Value injected by FXMLLoader
-
-    @FXML // fx:id="verticalPaddingSlider6"
-    private Slider verticalPaddingSlider6; // Value injected by FXMLLoader
-
-    @FXML // fx:id="imgScaleSlider"
-    private Slider imgScaleSlider; // Value injected by FXMLLoader
-
-    @FXML // fx:id="imageRepeatHCB"
-    private CheckBox imageRepeatHCB; // Value injected by FXMLLoader
-
-    @FXML // fx:id="imageRepeatVCB"
-    private CheckBox imageRepeatVCB; // Value injected by FXMLLoader
-
-    @FXML // fx:id="titleText"
-    private TextField titleText; // Value injected by FXMLLoader
 
     public NinePatchTestController() {
         super();
-    }
-
-    @FXML
-    void initialize(){
+    
         Image im = new Image("/9PatchSample.png");
-        ninePatch1.setBackground(im);
-        ninePatch1.setTitleBackground(im);
-        ninePatch2.setBackground(im);
-        ninePatch2.setTitleBackground(im);
+        ninePatch.setBackground(im);
+        ninePatch.setTitleBackground(im);
+
+        GridPane gp = new GridPane();
+        GridHelper.size(gp, 3,3);
+        GridHelper.layout(gp,
+            btn(HPos.LEFT, VPos.TOP),btn(HPos.CENTER, VPos.TOP),btn(HPos.RIGHT, VPos.TOP),
+            btn(HPos.LEFT, VPos.CENTER),btn(HPos.CENTER, VPos.CENTER),btn(HPos.RIGHT, VPos.CENTER),
+            btn(HPos.LEFT, VPos.BOTTOM),btn(HPos.CENTER, VPos.BOTTOM),btn(HPos.RIGHT, VPos.BOTTOM)
+        );
+
+        GridHelper.size(this, 3,9);
+        GridHelper.layout(this,
+                titleText,                                       ninePatchPatchSizesH,              gp,
+                btn("Select Img", this::selectImage),               ninePatchPatchSizesV,              gp,
+                btn("Select Title Img", this::selectTitleImage),    new Label("Img Patch Sizes"), gp,
+                ninePatchPatchInsetsH,                                  ninePatch,                         ninePatchContentPaddingH,
+                ninePatchPatchInsetsV,                                  ninePatch,                         ninePatchContentPaddingV,
+                new Label("Patch Insets"),                         ninePatch,                         new Label("Content Padding"),
+                btn("Toggle Borders", this::toggleBorders),         ninePatchContentSizesH,            imageRepeatHCB,
+                null,                                                   ninePatchContentSizesV,            imageRepeatVCB,
+                null,                                                   new Label("Corner Sizes"),    imgScaleSlider
+                );
+
+        ninePatch.setTitle("hi i'm yety!");
+        ninePatch.setTitleContent(new Label("Hi there"));
+
+        titleText.textProperty().bindBidirectional(ninePatch.titleProperty);
+
+        imageRepeatHCB.items.setAll(new ArrayList<>(List.of(BackgroundRepeat.NO_REPEAT, BackgroundRepeat.REPEAT, BackgroundRepeat.ROUND)));
+        imageRepeatVCB.items.setAll(new ArrayList<>(List.of(BackgroundRepeat.NO_REPEAT, BackgroundRepeat.REPEAT, BackgroundRepeat.ROUND)));
+
+        ninePatch.backgroundHRepeatProperty.bindBidirectional(imageRepeatHCB.selectedItem);
+        ninePatch.backgroundVRepeatProperty.bindBidirectional(imageRepeatVCB.selectedItem);
+
+        ninePatch.imageScaleProperty.bindBidirectional(imgScaleSlider.valueProperty());
+
+        GridPane.setFillHeight(ninePatch, true);
+        GridPane.setFillWidth(ninePatch, true);
+
+        VBox v1;
+        ninePatch.contentChildren.add(v1 = new VBox(new Slider(),new Slider(),new Slider(),new Slider(),new Slider()));
+        v1.setFillWidth(true);
+        v1.setAlignment(Pos.CENTER);
+        ninePatch.getContentPane().setAlignment(Pos.CENTER);
+        ninePatch.getContentPane().setAlignment(Pos.CENTER);
+
+
+        ninePatchPatchSizesH.valueProperty().addListener(observable -> {
+            var i = ninePatch.getImgPatchSizes();
+            ninePatch.setImgPatchSizes(new Insets(i.getTop(), ninePatchPatchSizesH.getValue(), i.getBottom(), ninePatchPatchSizesH.getValue()));
+        });
+        ninePatchPatchSizesV.valueProperty().addListener(observable -> {
+            var i = ninePatch.getImgPatchSizes();
+            ninePatch.setImgPatchSizes(new Insets(ninePatchPatchSizesV.getValue(), i.getRight(), ninePatchPatchSizesV.getValue(), i.getLeft()));
+        });
+
+        ninePatchPatchInsetsH.valueProperty().addListener(observable -> {
+            var i = ninePatch.getImgPatchInsets();
+            ninePatch.setImgPatchInsets(new Insets(i.getTop(), ninePatchPatchInsetsH.getValue(), i.getBottom(), ninePatchPatchInsetsH.getValue()));
+        });
+        ninePatchPatchInsetsV.valueProperty().addListener(observable -> {
+            var i = ninePatch.getImgPatchInsets();
+            ninePatch.setImgPatchInsets(new Insets(ninePatchPatchInsetsV.getValue(), i.getRight(), ninePatchPatchInsetsV.getValue(), i.getLeft()));
+        });
+
+        ninePatchContentSizesH.valueProperty().addListener(observable -> {
+            var i = ninePatch.controlPatchSizesProperty.get();
+            ninePatch.setContentPatchSizes(new Insets(i.getTop(), ninePatchContentSizesH.getValue(), i.getBottom(), ninePatchContentSizesH.getValue()));
+        });
+        ninePatchContentSizesV.valueProperty().addListener(observable -> {
+            var i = ninePatch.controlPatchSizesProperty.get();
+            ninePatch.setContentPatchSizes(new Insets(ninePatchContentSizesV.getValue(), i.getRight(), ninePatchContentSizesV.getValue(), i.getLeft()));
+        });
+
+        ninePatchTitleMarginH.valueProperty().addListener(observable -> {
+            var i = ninePatch.getTitleMargins();
+            ninePatch.setTitleMargins(new Insets(i.getTop(), ninePatchTitleMarginH.getValue(), i.getBottom(), ninePatchTitleMarginH.getValue()));
+        });
+        ninePatchTitleMarginV.valueProperty().addListener(observable -> {
+            var i = ninePatch.getTitleMargins();
+            ninePatch.setTitleMargins(new Insets(ninePatchTitleMarginV.getValue(), i.getRight(), ninePatchTitleMarginV.getValue(), i.getLeft()));
+        });
+        
+
+        ninePatchContentPaddingH.valueProperty().addListener(observable -> {
+            var i = ninePatch.getContentPadding();
+            ninePatch.setContentPadding(new Insets(i.getTop(), ninePatchContentPaddingH.getValue(), i.getBottom(), ninePatchContentPaddingH.getValue()));
+        });
+        ninePatchContentPaddingV.valueProperty().addListener(observable -> {
+            var i = ninePatch.getContentPadding();
+            ninePatch.setContentPadding(new Insets(ninePatchContentPaddingV.getValue(), i.getRight(), ninePatchContentPaddingV.getValue(), i.getLeft()));
+        });
+
+        gridMarginSliderH.valueProperty().addListener(observable -> {
+            var i = ninePatch.getContentMargins();
+            GridPane.setMargin(ninePatch, new Insets(i.getTop(), gridMarginSliderH.getValue(), i.getBottom(), gridMarginSliderH.getValue()));
+        });
+        gridMarginSliderV.valueProperty().addListener(observable -> {
+            var i = ninePatch.getContentMargins();
+            GridPane.setMargin(ninePatch, new Insets(gridMarginSliderV.getValue(), i.getRight(), gridMarginSliderV.getValue(), i.getLeft()));
+        });
     }
 
-    @FXML
-    void anchorTitleB(ActionEvent event) {
-        ninePatch2.setTitleHPos(HPos.CENTER);
-        ninePatch2.setTitleVPos(VPos.BOTTOM);
+    private Button btn(HPos hPos, VPos vPos) {
+        Button b = new Button();
+        String lbl = "";
+
+        lbl += switch (hPos) {
+            case LEFT -> "L";
+            case CENTER -> "C";
+            case RIGHT -> "R";
+        };
+        lbl += switch (vPos) {
+            case TOP -> "T";
+            case CENTER, BASELINE -> "C";
+            case BOTTOM -> "B";
+        };
+
+        b.setText(lbl);
+
+        b.setOnAction(e -> {
+            ninePatch.setTitleHPos(hPos);
+            ninePatch.setTitleVPos(vPos);
+        });
+
+        return b;
+    }
+    private Button btn(String txt, EventHandler<ActionEvent> action) {
+        Button b = new Button(txt);
+        b.setOnAction(action);
+        return b;
     }
 
-    @FXML
-    void anchorTitleBL(ActionEvent event) {
-        ninePatch2.setTitleHPos(HPos.LEFT);
-        ninePatch2.setTitleVPos(VPos.BOTTOM);
-
-    }
-
-    @FXML
-    void anchorTitleBR(ActionEvent event) {
-        ninePatch2.setTitleHPos(HPos.RIGHT);
-        ninePatch2.setTitleVPos(VPos.BOTTOM);
-
-    }
-
-    @FXML
-    void anchorTitleC(ActionEvent event) {
-        ninePatch2.setTitleHPos(HPos.CENTER);
-        ninePatch2.setTitleVPos(VPos.CENTER);
-
-    }
-
-    @FXML
-    void anchorTitleL(ActionEvent event) {
-        ninePatch2.setTitleHPos(HPos.LEFT);
-        ninePatch2.setTitleVPos(VPos.CENTER);
-
-    }
-
-    @FXML
-    void anchorTitleR(ActionEvent event) {
-        ninePatch2.setTitleHPos(HPos.RIGHT);
-        ninePatch2.setTitleVPos(VPos.CENTER);
-
-    }
-
-    @FXML
-    void anchorTitleT(ActionEvent event) {
-        ninePatch2.setTitleHPos(HPos.CENTER);
-        ninePatch2.setTitleVPos(VPos.TOP);
-
-    }
-
-    @FXML
-    void anchorTitleTL(ActionEvent event) {
-        ninePatch2.setTitleHPos(HPos.LEFT);
-        ninePatch2.setTitleVPos(VPos.TOP);
-
-    }
-
-    @FXML
-    void anchorTitleTR(ActionEvent event) {
-        ninePatch2.setTitleHPos(HPos.RIGHT);
-        ninePatch2.setTitleVPos(VPos.TOP);
-
-    }
-
-    @FXML
     void selectImage(ActionEvent event) {
         var file = new FileChooser().showOpenDialog(this.getScene().getWindow());
         if(file!=null) {
             String path = file.toURI().toString();
             var img = new Image(path);
-            ninePatch1.setBackground(img);
-            ninePatch2.setBackground(img);
+            ninePatch.setBackground(img);
+            ninePatch.setBackground(img);
         }
     }
-    @FXML
+    
     void selectTitleImage(ActionEvent event) {
         var file = new FileChooser().showOpenDialog(this.getScene().getWindow());
         if(file!=null) {
             String path = file.toURI().toString();
             var img = new Image(path);
-            ninePatch1.setTitleBackground(img);
-            ninePatch2.setTitleBackground(img);
+            ninePatch.setTitleBackground(img);
+            ninePatch.setTitleBackground(img);
         }
     }
-
-    @FXML
-    void setImageRepeatH(ActionEvent event) {
-        ninePatch1.setBackgroundHRepeat(imageRepeatHCB.isSelected()? BackgroundRepeat.REPEAT : BackgroundRepeat.NO_REPEAT);
-        ninePatch2.setBackgroundHRepeat(imageRepeatHCB.isSelected()? BackgroundRepeat.REPEAT : BackgroundRepeat.NO_REPEAT);
-    }
-
-    @FXML
-    void setImageRepeatV(ActionEvent event) {
-        ninePatch1.setBackgroundVRepeat(imageRepeatVCB.isSelected()? BackgroundRepeat.REPEAT : BackgroundRepeat.NO_REPEAT);
-        ninePatch2.setBackgroundVRepeat(imageRepeatVCB.isSelected()? BackgroundRepeat.REPEAT : BackgroundRepeat.NO_REPEAT);
-    }
-
-
-    @FXML
+    
     void toggleBorders(ActionEvent event) {
-        if (ninePatch1.getPatchDebugBorder() == null) {
-            ninePatch1.setPatchDebugBorder(new Border(new BorderStroke(Color.RED, BorderStrokeStyle.DASHED, new CornerRadii(4), BorderStroke.THIN)));
-            ninePatch2.setPatchDebugBorder(new Border(new BorderStroke(Color.RED, BorderStrokeStyle.DASHED, new CornerRadii(4), BorderStroke.THIN)));
+        if (ninePatch.getPatchDebugBorder() == null) {
+            ninePatch.setPatchDebugBorder(new Border(new BorderStroke(Color.RED, BorderStrokeStyle.DASHED, new CornerRadii(4), BorderStroke.THIN)));
+            ninePatch.setPatchDebugBorder(new Border(new BorderStroke(Color.RED, BorderStrokeStyle.DASHED, new CornerRadii(4), BorderStroke.THIN)));
         }else{
-            ninePatch1.setPatchDebugBorder(null);
-            ninePatch2.setPatchDebugBorder(null);
+            ninePatch.setPatchDebugBorder(null);
+            ninePatch.setPatchDebugBorder(null);
         }
-    }
-
-    public void init() {
-        ninePatch2.setTitle("hi i'm jody!");
-        ninePatch2.setTitleShown(true);
-        ninePatch1.init();
-        ninePatch2.init();
-        titleText.textProperty().bindBidirectional(ninePatch2.titleProperty);
-
-        GridPane.setFillHeight(ninePatch1, true);
-        GridPane.setFillWidth(ninePatch1, true);
-        GridPane.setFillHeight(ninePatch2, true);
-        GridPane.setFillWidth(ninePatch2, true);
-
-        VBox v1, v2;
-        ninePatch1.contentChildren.add(v1 = new VBox(new Slider(),new Slider(),new Slider(),new Slider(),new Slider()));
-        ninePatch2.contentChildren.add(v2 = new VBox(new Slider(),new Slider(),new Slider(),new Slider(),new Slider()));
-        v1.setFillWidth(true);
-        v2.setFillWidth(true);
-        v1.setAlignment(Pos.CENTER);
-        v2.setAlignment(Pos.CENTER);
-        ninePatch1.getContentPane().setAlignment(Pos.CENTER);
-        ninePatch2.getContentPane().setAlignment(Pos.CENTER);
-
-        ninePatch1.imgBorderSizesProperty.bind(ninePatch1.patchSizesProperty);
-        ninePatch2.imgBorderSizesProperty.bind(ninePatch2.patchSizesProperty.map(i->{
-            double h = ninePatch2.srcImgProperty.get().getHeight();
-            double w = ninePatch2.srcImgProperty.get().getWidth();
-            return new Insets(i.getTop()*h/100d,i.getRight()*w/100d,i.getBottom()*h/100d,i.getLeft()*w/100d);
-        }));
-        horizontalPaddingSlider1.valueProperty().addListener(observable -> {
-            var i = ninePatch1.getPatchSizes();
-            ninePatch1.setPatchSizes(new Insets(i.getTop(), horizontalPaddingSlider1.getValue(), i.getBottom(), horizontalPaddingSlider1.getValue()));
-            ninePatch2.setPatchSizes(new Insets(i.getTop(), horizontalPaddingSlider1.getValue(), i.getBottom(), horizontalPaddingSlider1.getValue()));
-        });
-        horizontalPaddingSlider2.valueProperty().addListener(observable -> {
-            var i = ninePatch1.getTitlePatchSizes();
-            ninePatch1.setTitlePatchSizes(new Insets(i.getTop(), horizontalPaddingSlider2.getValue(), i.getBottom(), horizontalPaddingSlider2.getValue()));
-            ninePatch2.setTitlePatchSizes(new Insets(i.getTop(), horizontalPaddingSlider2.getValue(), i.getBottom(), horizontalPaddingSlider2.getValue()));
-        });
-        verticalPaddingSlider1.valueProperty().addListener(observable -> {
-            var i = ninePatch1.getPatchSizes();
-            ninePatch1.setPatchSizes(new Insets(verticalPaddingSlider1.getValue(), i.getRight(), verticalPaddingSlider1.getValue(), i.getLeft()));
-            ninePatch2.setPatchSizes(new Insets(verticalPaddingSlider1.getValue(), i.getRight(), verticalPaddingSlider1.getValue(), i.getLeft()));
-        });
-        verticalPaddingSlider2.valueProperty().addListener(observable -> {
-            var i = ninePatch1.getTitlePatchSizes();
-            ninePatch1.setTitlePatchSizes(new Insets(verticalPaddingSlider2.getValue(), i.getRight(), verticalPaddingSlider2.getValue(), i.getLeft()));
-            ninePatch2.setTitlePatchSizes(new Insets(verticalPaddingSlider2.getValue(), i.getRight(), verticalPaddingSlider2.getValue(), i.getLeft()));
-        });
-
-        horizontalPaddingSlider3.valueProperty().addListener(observable -> {
-            var i = ninePatch1.getContentPadding();
-            ninePatch1.setContentPadding(new Insets(i.getTop(), horizontalPaddingSlider3.getValue(), i.getBottom(), horizontalPaddingSlider3.getValue()));
-            ninePatch2.setContentPadding(new Insets(i.getTop(), horizontalPaddingSlider3.getValue(), i.getBottom(), horizontalPaddingSlider3.getValue()));
-        });
-        horizontalPaddingSlider4.valueProperty().addListener(observable -> {
-            var i = ninePatch1.getTitlePadding();
-            ninePatch1.setTitlePadding(new Insets(i.getTop(), horizontalPaddingSlider4.getValue(), i.getBottom(), horizontalPaddingSlider4.getValue()));
-            ninePatch2.setTitlePadding(new Insets(i.getTop(), horizontalPaddingSlider4.getValue(), i.getBottom(), horizontalPaddingSlider4.getValue()));
-        });
-        verticalPaddingSlider3.valueProperty().addListener(observable -> {
-            var i = ninePatch1.getContentPadding();
-            ninePatch1.setContentPadding(new Insets(verticalPaddingSlider3.getValue(), i.getRight(), verticalPaddingSlider3.getValue(), i.getLeft()));
-            ninePatch2.setContentPadding(new Insets(verticalPaddingSlider3.getValue(), i.getRight(), verticalPaddingSlider3.getValue(), i.getLeft()));
-        });
-        verticalPaddingSlider4.valueProperty().addListener(observable -> {
-            var i = ninePatch1.getTitlePadding();
-            ninePatch1.setTitlePadding(new Insets(verticalPaddingSlider4.getValue(), i.getRight(), verticalPaddingSlider4.getValue(), i.getLeft()));
-            ninePatch2.setTitlePadding(new Insets(verticalPaddingSlider4.getValue(), i.getRight(), verticalPaddingSlider4.getValue(), i.getLeft()));
-        });
-        horizontalPaddingSlider5.valueProperty().addListener(observable -> {
-            var i = ninePatch1.getTitleMargins();
-            ninePatch1.setTitleMargins(new Insets(i.getTop(), horizontalPaddingSlider5.getValue(), i.getBottom(), horizontalPaddingSlider5.getValue()));
-            ninePatch2.setTitleMargins(new Insets(i.getTop(), horizontalPaddingSlider5.getValue(), i.getBottom(), horizontalPaddingSlider5.getValue()));
-        });
-        verticalPaddingSlider5.valueProperty().addListener(observable -> {
-            var i = ninePatch1.getTitleMargins();
-            ninePatch1.setTitleMargins(new Insets(verticalPaddingSlider5.getValue(), i.getRight(), verticalPaddingSlider5.getValue(), i.getLeft()));
-            ninePatch2.setTitleMargins(new Insets(verticalPaddingSlider5.getValue(), i.getRight(), verticalPaddingSlider5.getValue(), i.getLeft()));
-        });
-
-
-        horizontalPaddingSlider6.valueProperty().addListener(observable -> {
-            var i = ninePatch1.getContentMargins();
-            GridPane.setMargin(ninePatch1.patchGrid, new Insets(i.getTop(), horizontalPaddingSlider6.getValue(), i.getBottom(), horizontalPaddingSlider6.getValue()));
-            GridPane.setMargin(ninePatch2.patchGrid, new Insets(i.getTop(), horizontalPaddingSlider6.getValue(), i.getBottom(), horizontalPaddingSlider6.getValue()));
-        });
-        verticalPaddingSlider6.valueProperty().addListener(observable -> {
-            var i = ninePatch1.getContentMargins();
-            GridPane.setMargin(ninePatch1.patchGrid, new Insets(verticalPaddingSlider6.getValue(), i.getRight(), verticalPaddingSlider6.getValue(), i.getLeft()));
-            GridPane.setMargin(ninePatch2.patchGrid, new Insets(verticalPaddingSlider6.getValue(), i.getRight(), verticalPaddingSlider6.getValue(), i.getLeft()));
-        });
     }
 }
