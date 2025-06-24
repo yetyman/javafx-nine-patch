@@ -69,6 +69,16 @@ public class NinePatchTestController extends GridPane {
                 null,                                                   new Label("Corner Sizes"),    imgScaleSlider
                 );
 
+        getColumnConstraints().get(0).setMaxWidth(USE_PREF_SIZE);
+        getColumnConstraints().get(2).setMaxWidth(USE_PREF_SIZE);
+
+        getRowConstraints().get(0).setMaxHeight(USE_PREF_SIZE);
+        getRowConstraints().get(1).setMaxHeight(USE_PREF_SIZE);
+        getRowConstraints().get(2).setMaxHeight(USE_PREF_SIZE);
+        getRowConstraints().get(6).setMaxHeight(USE_PREF_SIZE);
+        getRowConstraints().get(7).setMaxHeight(USE_PREF_SIZE);
+        getRowConstraints().get(8).setMaxHeight(USE_PREF_SIZE);
+
         ninePatch.setTitle("hi i'm yety!");
         ninePatch.setTitleContent(new Label("Hi there"));
 

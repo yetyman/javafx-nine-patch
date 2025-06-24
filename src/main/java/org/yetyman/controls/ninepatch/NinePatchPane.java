@@ -29,20 +29,20 @@ public class NinePatchPane extends GridPane {
      * This in conjunction with patchScale determines the number of pixels of an image which are sampled for the border
      */
     public final ObjectProperty<Insets> controlPatchSizesProperty
-            = CssHelper.createCssProperty(this, "-fx-patch-size", InsetsConverter.getInstance(), Insets.EMPTY);
+            = CssHelper.createCssProperty(this, "-fx-patch-size", InsetsConverter.getInstance(), new Insets(14));
 
     /**
      * Insets describing the number of pixels of imgBorder border on any side.
      * This in conjunction with imgBorderScale determines the number of pixels of an image which are sampled for the border
      */
     public final ObjectProperty<Insets> imgPatchSizesProperty
-            = CssHelper.createCssProperty(this, "-fx-img-patch", InsetsConverter.getInstance(), Insets.EMPTY);
+            = CssHelper.createCssProperty(this, "-fx-img-patch", InsetsConverter.getInstance(), new Insets(7));
 
     /**
      * Insets describing the number of pixels to inset from the borders of the src image on any side.
      */
     public final ObjectProperty<Insets> imgPatchInsetsProperty
-            = CssHelper.createCssProperty(this, "-fx-img-patch-insets", InsetsConverter.getInstance(), Insets.EMPTY);
+            = CssHelper.createCssProperty(this, "-fx-img-patch-insets", InsetsConverter.getInstance(), new Insets(0));
 
     /**
      * Insets describing the number of pixels of patch border on any side.
